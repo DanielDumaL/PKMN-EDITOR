@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokemon PC</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #1a1c2c;
+  --panel:    #252741;
+  --screen:   #0f1923;
+  --border:   #3d4275;
+  --accent:   #5fc4e8;
+  --accent2:  #f7b731;
+  --green:    #78ffd6;
+  --red:      #ff5e57;
+  --text:     #e0e8ff;
+  --muted:    #5a6090;
+  --pixel:    'Press Start 2P', monospace;
+  --vt:       'VT323', monospace;
+  --slot-w:   64px;
+  --slot-h:   64px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--pixel);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(95,196,232,.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(247,183,49,.04) 0%, transparent 50%);
+}
+
+/* ---- UPLOAD SCREEN ---- */
+#uploadScreen {
+  width: 100%;
+  max-width: 500px;
+  margin: 60px auto;
+}
+
+.pc-frame {
+  background: var(--panel);
+  border: 3px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #1a1c2c, 0 0 40px rgba(95,196,232,.1), inset 0 1px 0 rgba(255,255,255,.05);
+  overflow: hidden;
+}
+
+.pc-titlebar {
+  background: var(--accent);
+  color: #0a0c18;
+  font-size: 7px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 1px;
+}
+.pc-titlebar .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #0a0c18;
+  opacity: .4;
+}
+
+.pc-screen {
+  background: var(--screen);
+  padding: 32px 24px;
+  text-align: center;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.pc-screen .icon { font-size: 48px; line-height: 1; margin-bottom: 8px; }
+
+.title {
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  line-height: 1.8;
+  text-shadow: 0 0 12px rgba(95,196,232,.5);
+}
+
+.subtitle {
+  font-family: var(--vt);
+  font-size: 18px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.upload-btn {
+  background: var(--accent2);
+  color: #1a1c2c;
+  border: none;
+  padding: 10px 20px;
+  font-family: var(--pixel);
+  font-size: 7px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  border-bottom: 3px solid #c49020;
+  transition: transform .1s, border-bottom .1s;
+  position: relative;
+}
+.upload-btn:active { transform: translateY(2px); border-bottom-width: 1px; }
+.upload-btn:hover { background: #ffc842; }
+
+.upload-btn input {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+
+.pc-footer {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pc-footer .led {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.pc-footer .hint {
+  font-family: var(--vt);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ---- LOADING ---- */
+#loadingScreen {
+  display: none;
+  width: 100%;
+  max-width: 500px;
+  margin: 60px auto;
+}
+#loadingScreen .pc-screen { gap: 16px; }
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #0a0c18;
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  width: 0%;
+  box-shadow: 0 0 8px var(--green);
+  transition: width .3s;
+  animation: fill 1.5s ease-in-out infinite alternate;
+}
+@keyframes fill { from{width:15%} to{width:85%} }
+.loading-text { font-family:var(--vt); font-size:20px; color:var(--green); }
+
+/* ---- PC VIEWER ---- */
+#pcScreen {
+  display: none;
+  width: 100%;
+  max-width: 900px;
+}
+
+.pc-main {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Panel izquierdo */
+.panel-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trainer-card {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 14px;
+}
+.trainer-card .label { font-size:6px; color:var(--muted); letter-spacing:1px; margin-bottom:6px; }
+.trainer-card .name { font-size:9px; color:var(--accent2); letter-spacing:1px; }
+.trainer-card .id { font-family:var(--vt); font-size:18px; color:var(--muted); margin-top:4px; }
+
+.box-list {
+  background: var(--screen);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.box-list-title {
+  background: var(--border);
+  font-size: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+.box-item {
+  padding: 8px 10px;
+  font-family: var(--vt);
+  font-size: 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background .1s;
+}
+.box-item:hover { background: rgba(95,196,232,.06); }
+.box-item.active {
+  background: var(--accent);
+  color: #0a0c18;
+}
+.box-item.active .box-count { color: #0a0c18; opacity: .6; }
+.box-count { font-size: 13px; color: var(--muted); }
+
+.back-btn {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  font-family: var(--pixel);
+  font-size: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: border-color .1s, color .1s;
+}
+.back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Panel derecho - la caja */
+.panel-right {}
+
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.box-name {
+  font-size: 9px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(95,196,232,.4);
+}
+.box-nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.nav-btn {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  color: var(--text);
+  font-family: var(--pixel);
+  font-size: 8px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  transition: border-color .1s, background .1s;
+}
+.nav-btn:hover { border-color: var(--accent); background: rgba(95,196,232,.08); }
+.box-counter { font-family:var(--vt); font-size:18px; color:var(--muted); }
+
+/* Grid de slots */
+.box-grid {
+  background: var(--screen);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.slot {
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color .15s, background .15s, transform .1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.slot.empty { cursor: default; }
+.slot:not(.empty):hover {
+  border-color: var(--accent);
+  background: rgba(95,196,232,.08);
+  transform: scale(1.05);
+  z-index: 2;
+}
+.slot.selected { border-color: var(--accent2); box-shadow: 0 0 0 2px var(--accent2); }
+
+/* Sprite del Pokemon (emoji o imagen) */
+.slot-sprite {
+  font-size: 28px;
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.slot.empty .slot-sprite { font-size: 20px; opacity: .1; }
+
+/* Indicador shiny */
+.shiny-star {
+  position: absolute;
+  top: 2px; right: 2px;
+  font-size: 8px;
+  line-height: 1;
+  filter: drop-shadow(0 0 3px gold);
+}
+
+/* Tooltip de nivel */
+.slot-level {
+  position: absolute;
+  bottom: 2px; left: 3px;
+  font-family: var(--vt);
+  font-size: 11px;
+  color: var(--accent2);
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
+}
+
+/* ---- DETAIL PANEL ---- */
+.detail-panel {
+  margin-top: 12px;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  min-height: 120px;
+  transition: opacity .2s;
+}
+.detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  font-family: var(--vt);
+  font-size: 18px;
+  color: var(--muted);
+}
+.detail-content { display: none; }
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.detail-sprite { font-size: 52px; line-height: 1; }
+.detail-info {}
+.detail-name {
+  font-size: 10px;
+  color: var(--accent2);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.detail-nickname { font-family:var(--vt); font-size:18px; color:var(--muted); }
+.detail-types { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+.type-badge {
+  font-family: var(--pixel);
+  font-size: 5px;
+  padding: 3px 7px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.stat-row { display: flex; flex-direction: column; gap: 2px; }
+.stat-label { font-size: 5px; color: var(--muted); letter-spacing: 1px; }
+.stat-value { font-family: var(--vt); font-size: 18px; color: var(--text); }
+.shiny-tag {
+  font-size: 6px;
+  background: linear-gradient(90deg, #f7b731, #ff6b6b);
+  color: #1a1c2c;
+  padding: 3px 8px;
+  letter-spacing: 1px;
+}
+
+/* ---- ERROR ---- */
+.error-msg {
+  background: rgba(255,94,87,.08);
+  border: 2px solid rgba(255,94,87,.3);
+  padding: 16px;
+  border-radius: 4px;
+  font-family: var(--vt);
+  font-size: 18px;
+  color: var(--red);
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 680px) {
+  .pc-main { grid-template-columns: 1fr; }
+  .panel-left { flex-direction: row; flex-wrap: wrap; }
+  .box-list { min-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE UPLOAD -->
+<div id="uploadScreen">
+  <div class="pc-frame">
+    <div class="pc-titlebar">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      BILL'S PC  ·  v2.0
+    </div>
+    <div class="pc-screen">
+      <div class="icon">💾</div>
+      <div class="title">POKEMON<br>PC SYSTEM</div>
+      <div class="subtitle">Carga tu archivo de guardado</div>
+      <div class="subtitle" style="font-size:14px;color:var(--muted)">FireRed · LeafGreen · Ruby · Sapphire · Emerald</div>
+      <div class="upload-btn">
+        ▶ CARGAR SAVE
+        <input type="file" id="fileInput" accept=".sav,.SAV">
+      </div>
+    </div>
+    <div class="pc-footer">
+      <div class="led"></div>
+      <div class="hint">Arrastra el .sav aquí también</div>
+    </div>
+  </div>
+  <div id="uploadError" style="display:none" class="error-msg"></div>
+</div>
+
+<!-- PANTALLA DE CARGA -->
+<div id="loadingScreen">
+  <div class="pc-frame">
+    <div class="pc-titlebar">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      CARGANDO DATOS...
+    </div>
+    <div class="pc-screen">
+      <div class="loading-text">Accediendo al PC de BILL...</div>
+      <div class="progress-bar" style="width:200px"><div class="progress-fill"></div></div>
+      <div class="loading-text" style="font-size:14px;color:var(--muted)">Desencriptando datos de Pokémon</div>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA PRINCIPAL DEL PC -->
+<div id="pcScreen">
+  <div class="pc-main">
+
+    <!-- Panel izquierdo -->
+    <div class="panel-left">
+      <div class="trainer-card">
+        <div class="label">ENTRENADOR</div>
+        <div class="name" id="trainerName">—</div>
+        <div class="id" id="trainerId">ID: —</div>
+        <div class="id" id="totalPkm" style="color:var(--green);margin-top:4px">0 PKM guardados</div>
+      </div>
+
+      <div class="box-list">
+        <div class="box-list-title">▼ CAJAS</div>
+        <div id="boxList"></div>
+      </div>
+
+      <button class="back-btn" onclick="goBack()">← VOLVER</button>
+    </div>
+
+    <!-- Panel derecho -->
+    <div class="panel-right">
+      <div class="box-header">
+        <div class="box-name" id="currentBoxName">CAJA 1</div>
+        <div class="box-nav">
+          <button class="nav-btn" onclick="prevBox()">◀</button>
+          <div class="box-counter" id="boxCounter">1/14</div>
+          <button class="nav-btn" onclick="nextBox()">▶</button>
+        </div>
+      </div>
+
+      <div class="box-grid" id="boxGrid"></div>
+
+      <div class="detail-panel" id="detailPanel">
+        <div class="detail-empty" id="detailEmpty">← Selecciona un Pokémon</div>
+        <div class="detail-content" id="detailContent"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// =========================================================
+// ESTADO DE LA APP
+// =========================================================
+let allBoxes    = [];
+let currentBox  = 0;
+let selectedSlot = null;
+
+// Emojis de Pokemon por numero de especie
+// (usamos sprites de texto ya que no podemos cargar imagenes externas)
+const TYPE_EMOJI = {
+  "Fire":"🔥","Water":"💧","Grass":"🌿","Electric":"⚡","Psychic":"🔮",
+  "Ice":"❄️","Dragon":"🐲","Dark":"🌑","Ghost":"👻","Poison":"☠️",
+  "Fighting":"🥊","Flying":"🌀","Rock":"🪨","Ground":"🌍","Bug":"🐛",
+  "Steel":"⚙️","Normal":"⭐","???":"❓"
+};
+
+// Sprite por tipo (para representar cada Pokemon visualmente)
+const SPECIES_EMOJI = {
+  // Por tipo del Pokemon cuando no tenemos sprite especifico
+  default: "⬜"
+};
+
+// Lista de emojis/sprites representativos por especie famosa
+const FAMOUS = {
+  1:"🌱",2:"🌿",3:"🌳",4:"🦎",5:"🦎",6:"🐉",
+  7:"🐢",8:"🐢",9:"🐢",25:"⚡",26:"⚡",
+  39:"🎵",40:"🎵",52:"🐱",53:"🐱",
+  54:"🦆",55:"🦆",63:"🔮",64:"🔮",65:"🔮",
+  74:"🪨",75:"🪨",76:"🪨",
+  94:"👻",95:"🐍",129:"🐟",130:"🐉",
+  131:"🧊",132:"🔵",133:"🦊",134:"💧",135:"⚡",136:"🔥",
+  143:"😴",144:"🧊",145:"⚡",146:"🔥",
+  147:"🐲",148:"🐲",149:"🐲",
+  150:"💜",151:"🌟",
+  196:"☀️",197:"🌙",
+  243:"⚡",244:"🔥",245:"💧",
+  248:"🦕",249:"🌧️",250:"🌅",251:"🍃",
+  252:"🌿",255:"🔥",258:"💧",
+  280:"🔮",281:"🔮",282:"🔮",
+  350:"🌊",373:"🐲",376:"🤖",
+  380:"💫",381:"💫",382:"🌊",383:"🔥",384:"🌪️",
+  385:"⭐",386:"🧬",
+};
+
+function getPokemonEmoji(species_id, type1) {
+  if (FAMOUS[species_id]) return FAMOUS[species_id];
+  return TYPE_EMOJI[type1] || "🔵";
+}
+
+// =========================================================
+// DRAG & DROP en la pantalla de upload
+// =========================================================
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+});
+
+document.getElementById("fileInput").addEventListener("change", e => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+
+async function processFile(file) {
+  document.getElementById("uploadScreen").style.display = "none";
+  document.getElementById("loadingScreen").style.display = "block";
+
+  const form = new FormData();
+  form.append("file", file);
+
+  try {
+    const res  = await fetch("/upload", { method:"POST", body:form });
+    const data = await res.json();
+
+    document.getElementById("loadingScreen").style.display = "none";
+
+    if (data.error) {
+      document.getElementById("uploadScreen").style.display = "block";
+      const err = document.getElementById("uploadError");
+      err.style.display = "block";
+      err.textContent = "❌ " + data.error;
+      return;
+    }
+
+    loadPC(data);
+
+  } catch (err) {
+    document.getElementById("loadingScreen").style.display = "none";
+    document.getElementById("uploadScreen").style.display = "block";
+    const e = document.getElementById("uploadError");
+    e.style.display = "block";
+    e.textContent = "❌ No se puede conectar con Flask. ¿Está corriendo python app.py?\n" + err.message;
+  }
+}
+
+function loadPC(data) {
+  allBoxes = data.boxes;
+
+  // Info del entrenador
+  document.getElementById("trainerName").textContent = data.trainer?.name || "???";
+  document.getElementById("trainerId").textContent   = "ID: " + (data.trainer?.trainer_id || "—");
+  document.getElementById("totalPkm").textContent    = data.total_pokemon + " PKM guardados";
+
+  // Lista de cajas en el sidebar
+  const listEl = document.getElementById("boxList");
+  listEl.innerHTML = "";
+  allBoxes.forEach((box, i) => {
+    const el = document.createElement("div");
+    el.className = "box-item" + (i === 0 ? " active" : "");
+    el.id = "box-item-" + i;
+    el.innerHTML = `<span>${box.name || "CAJA "+(i+1)}</span><span class="box-count">${box.count}/30</span>`;
+    el.onclick = () => selectBox(i);
+    listEl.appendChild(el);
+  });
+
+  document.getElementById("pcScreen").style.display = "block";
+  selectBox(0);
+}
+
+function selectBox(idx) {
+  currentBox   = idx;
+  selectedSlot = null;
+
+  // Update sidebar
+  document.querySelectorAll(".box-item").forEach(el => el.classList.remove("active"));
+  const active = document.getElementById("box-item-" + idx);
+  if (active) { active.classList.add("active"); active.scrollIntoView({block:"nearest"}); }
+
+  const box = allBoxes[idx];
+  document.getElementById("currentBoxName").textContent = box.name || "CAJA " + (idx+1);
+  document.getElementById("boxCounter").textContent     = (idx+1) + "/" + allBoxes.length;
+
+  renderGrid(box);
+  clearDetail();
+}
+
+function renderGrid(box) {
+  const grid = document.getElementById("boxGrid");
+  grid.innerHTML = "";
+
+  box.pokemon.forEach((pk, i) => {
+    const slot = document.createElement("div");
+    slot.className = "slot" + (pk ? "" : " empty");
+    slot.dataset.index = i;
+
+    if (pk) {
+      const emoji = getPokemonEmoji(pk.species_id, pk.type1);
+      slot.innerHTML = `
+        <div class="slot-sprite">${emoji}</div>
+        ${pk.is_shiny ? '<div class="shiny-star">✨</div>' : ''}
+        <div class="slot-level">L${pk.level}</div>
+      `;
+      slot.title = pk.nickname || pk.name;
+      slot.onclick = () => selectPokemon(i, pk, slot);
+    } else {
+      slot.innerHTML = '<div class="slot-sprite">·</div>';
+    }
+
+    grid.appendChild(slot);
+  });
+}
+
+function selectPokemon(idx, pk, slotEl) {
+  // Deseleccionar anterior
+  document.querySelectorAll(".slot.selected").forEach(s => s.classList.remove("selected"));
+  slotEl.classList.add("selected");
+  selectedSlot = idx;
+  showDetail(pk);
+}
+
+function showDetail(pk) {
+  document.getElementById("detailEmpty").style.display   = "none";
+  document.getElementById("detailContent").style.display = "block";
+
+  const emoji = getPokemonEmoji(pk.species_id, pk.type1);
+
+  const type2badge = pk.type2
+    ? `<span class="type-badge" style="background:${pk.type2_color}">${pk.type2}</span>`
+    : "";
+
+  const nickname = pk.nickname ? `<div class="detail-nickname">"${pk.nickname}"</div>` : "";
+
+  document.getElementById("detailContent").innerHTML = `
+    <div class="detail-header">
+      <div class="detail-sprite">${emoji}</div>
+      <div class="detail-info">
+        <div class="detail-name">
+          ${pk.is_shiny ? '<span class="shiny-tag">✨ SHINY</span> ' : ''}
+          ${pk.name}
+        </div>
+        ${nickname}
+        <div class="detail-types">
+          <span class="type-badge" style="background:${pk.type1_color}">${pk.type1}</span>
+          ${type2badge}
+        </div>
+      </div>
+    </div>
+    <div class="detail-stats">
+      <div class="stat-row">
+        <div class="stat-label">NIVEL</div>
+        <div class="stat-value">${pk.level}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">EXP</div>
+        <div class="stat-value">${pk.exp.toLocaleString()}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">ENTRENADOR</div>
+        <div class="stat-value">${pk.ot_name || "—"}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">ID ORIG.</div>
+        <div class="stat-value">${pk.trainer_id}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">N° DEX</div>
+        <div class="stat-value">#${String(pk.species_id).padStart(3,"0")}</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">PID</div>
+        <div class="stat-value" style="font-size:14px">${pk.pid.toString(16).toUpperCase().padStart(8,"0")}</div>
+      </div>
+    </div>
+  `;
+}
+
+function clearDetail() {
+  document.getElementById("detailEmpty").style.display   = "flex";
+  document.getElementById("detailContent").style.display = "none";
+}
+
+function prevBox() { if (currentBox > 0) selectBox(currentBox - 1); }
+function nextBox() { if (currentBox < allBoxes.length - 1) selectBox(currentBox + 1); }
+
+function goBack() {
+  document.getElementById("pcScreen").style.display    = "none";
+  document.getElementById("uploadScreen").style.display = "block";
+  document.getElementById("uploadError").style.display  = "none";
+  document.getElementById("fileInput").value = "";
+  allBoxes = []; currentBox = 0; selectedSlot = null;
+}
+
+// Teclado: flechas para navegar cajas
+document.addEventListener("keydown", e => {
+  if (document.getElementById("pcScreen").style.display === "none") return;
+  if (e.key === "ArrowLeft")  prevBox();
+  if (e.key === "ArrowRight") nextBox();
+});
+</script>
+
+</body>
+</html>
